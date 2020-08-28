@@ -452,7 +452,7 @@ class CircosUtil:
 
 
 
-    def generate_html_report(self, output_assembly_name, assembly_ref):
+    def generate_html_report(self, assembly_ref):
         """
         generate_html_report: generate html summary report
         """
@@ -541,7 +541,7 @@ class CircosUtil:
 
         output_files = self.generate_output_file_list(params['result_directory'])
 
-        output_html_files = self.generate_html_report(params['result_directory'],params['output_assembly_name'])
+        output_html_files = self.generate_html_report(params['result_directory'])
 
         report_params = {
               'message': '',
