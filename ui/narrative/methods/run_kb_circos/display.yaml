@@ -1,0 +1,65 @@
+#
+# define display information
+#
+name     : Visualize assembly using Circos -v0.69-8
+subtitle : visualize assembly and mapped reads using Circos
+tooltip  : visualize assembly and mapped reads using Circos
+
+icon: circos.png
+
+screenshots: []
+
+#
+# define a set of similar methods that might be useful to the user
+#
+suggestions:
+    apps:
+        related:
+            []
+        next:
+            []
+    methods:
+        related:
+            []
+        next:
+            []
+
+#
+# Configure the display and description of parameters
+#
+parameters :
+    assembly_ref :
+        ui-name : Assembly
+        short-hint : Genome assembly object
+        long-hint  : Genome assembly or bin that you want to improve
+
+    reads_file :
+        ui-name : Reads
+        short-hint : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Jorg will be run
+        long-hint  : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Jorg will be run
+
+    read_mapping_tool :
+        ui-name : Read Mapping Tool
+        short-hint : tool to use for read mapping (default BBmap)
+        long-hint  : tool to use for read mapping - options BBmap, Bowtie2 (default), Bowtie2 (very-sensitive) - (default BBmap)
+
+description : |
+
+    <p>Circos is a visualization tool with unique applications to displaying and interrogating DNA assemblies.</p>
+    <p><hr></p>
+    <p><hr></p>
+    <p><i>Implemented for KBase by <a href="mailto:sjungbluth@lbl.gov">Sean Jungbluth(sjungbluth@lbl.gov)</a></i></p>
+    <p><hr></p>
+    <p>This method assumes that you have a method to generate a DNA assembly.</p>
+    <p><hr></p>
+
+publications:
+    -
+        display-text : |
+            M Krzywinski, J Schein, I Birol, J Connors, R Gascoyne, D Horsman, SJ Jones, MA Marra. Circos: An information aesthetic for comparative genomics. Genome Research. 2009. doi:10.1101/gr.092759.109
+        link: https://doi.org/10.1101/2020.03.05.979740
+
+    -
+        display-text : |
+            Circos source:
+        link: http://circos.ca/
