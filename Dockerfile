@@ -15,6 +15,8 @@ RUN conda install -c bioconda seqkit
 
 RUN conda install -c bioconda circos
 
+RUN conda install pandas
+
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
 RUN chmod -R a+rw /kb/module

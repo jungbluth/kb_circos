@@ -9,6 +9,7 @@ import zipfile
 import copy
 import shutil
 import math
+import pandas as pd
 
 from installed_clients.AssemblyUtilClient import AssemblyUtil
 from installed_clients.DataFileUtilClient import DataFileUtil
@@ -364,6 +365,13 @@ class CircosUtil:
         command += '-bg > circos_mapping_tracks.txt'
         log('extract_mapping_tracks_from_bam: {}'.format(command))
         self._run_command(command)
+        file1 = open(os.path.abspath("circos_mapping_tracks.txt"), 'r')
+        pandas_df = pd.read_table(file1, header=None)
+        max_cov = round(pandas_df[3].max(),1)
+        min_cov = round(pandas_df[3].min(),1)
+        std_cov = round(pandas_df[3].std(),1)
+        mean_cov = round(pandas_df[3].mean(),1)
+        return max_cov, min_cov, std_cov, mean_cov
 
     def make_circos_karyotype_file(self, assembly_clean_sorted):
         from Bio import SeqIO
@@ -375,24 +383,42 @@ class CircosUtil:
                 count += 1
         f.close()
 
+    def count_num_contigs(self, assembly_clean_sorted):
+        num_contigs = 0
+        file1 = open(assembly_clean_sorted, 'r')
+        lines = file1.readlines()
+        for line in lines:
+            if line.startswith('>'):
+                num_contigs = num_contigs + 1
+        return num_contigs
+
+
+    def prep_circos_axis(self, max_cov):
+        if max_cov < 30:
+            max_cov = 30
+        command = 'sed -i "s/^max.*/max   = {}/" /kb/module/lib/kb_circos/circos/circos.conf '.format(max_cov)
+        log('prep_circos_axis: {}'.format(command))
+        self._run_command(command)
+
     def draw_circos_plot(self):
         command = 'circos -conf '
         command += '/kb/module/lib/kb_circos/circos/circos.conf'
         log('draw_circos_plot: {}'.format(command))
         self._run_command(command)
 
-    def make_circos_plot(self, task_params, reads_file, assembly):
+    def make_circos_plot(self, task_params, reads_file, output_jorg_assembly):
         output_fastq = self.uppercase_fastq_file(reads_file)
-        assembly_clean = self.clean_input_fasta(assembly)
-        assembly_clean_sorted = self.sort_fasta_by_length(assembly_clean)
+        output_jorg_assembly_clean = self.clean_input_fasta(output_jorg_assembly)
+        output_jorg_assembly_clean_sorted = self.sort_fasta_by_length(output_jorg_assembly_clean)
         sam = os.path.basename(output_fastq).split('.fastq')[0] + ".sam"
-        self.run_read_mapping_interleaved_pairs_mode(task_params, assembly_clean_sorted, output_fastq, sam)
-        # output_sam = self.run_bbmap_for_circos(assembly_clean_sorted, output_fastq)
+        self.run_read_mapping_interleaved_pairs_mode(task_params, output_jorg_assembly_clean_sorted, output_fastq, sam)
         sorted_bam = self.convert_sam_to_sorted_and_indexed_bam(sam)
-        self.extract_mapping_tracks_from_bam(sorted_bam)
-        self.make_circos_karyotype_file(assembly_clean_sorted)
+        max_cov, min_cov, std_cov, mean_cov = self.extract_mapping_tracks_from_bam(sorted_bam)
+        self.make_circos_karyotype_file(output_jorg_assembly_clean_sorted)
+        num_contigs = self.count_num_contigs(output_jorg_assembly_clean_sorted)
+        self.prep_circos_axis(max_cov)
         self.draw_circos_plot()
-        return assembly_clean_sorted
+        return output_jorg_assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs
 
     def move_circos_output_files_to_output_dir(self):
         dest = os.path.abspath(self.CIRCOS_RESULT_DIRECTORY)
@@ -411,11 +437,11 @@ class CircosUtil:
 
         log("\n\nRunning generate_circos_command")
 
-        assembly_clean_sorted = self.make_circos_plot(task_params, reads_file, assembly_ref)
+        assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs = self.make_circos_plot(task_params, reads_file, assembly_ref)
 
         self.move_circos_output_files_to_output_dir()
 
-        return assembly_clean_sorted
+        return assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs
 
 
 
@@ -452,7 +478,7 @@ class CircosUtil:
 
 
 
-    def generate_html_report(self, assembly_ref):
+    def generate_html_report(self, assembly_ref, assembly_stats):
         """
         generate_html_report: generate html summary report
         """
@@ -476,9 +502,8 @@ class CircosUtil:
         # Example
         # Overview_Content += '<p>Input contigs: {}</p>'.format(input_contig_count)
 
-        Overview_Content += '<p>Iteration Selected: 3</p>'
-        Overview_Content += '<p>Number of contigs: 4</p>'
-        Overview_Content += '<p>Circularized genome: No </p>'
+        Overview_Content += '<p>Number of contigs: {}</p>'.format(assembly_stats['num_contigs'])
+        Overview_Content += '<p>Coverage (avg, sd, max, min): {}, {}, {}, {}</p>'.format(assembly_stats['mean_cov'],assembly_stats['std_cov'],assembly_stats['max_cov'],assembly_stats['min_cov'])
         for png_filename in png_filename_l:
             Overview_Content += '\n<embed src="{}" width="700px" height="700px">'.format(png_filename)
 
@@ -531,7 +556,7 @@ class CircosUtil:
 
         return [html_shockInfo]
 
-    def generate_report(self, params):
+    def generate_report(self, params, assembly_stats):
         """
         generate_report: generate summary report
 
@@ -541,7 +566,7 @@ class CircosUtil:
 
         output_files = self.generate_output_file_list(params['result_directory'])
 
-        output_html_files = self.generate_html_report(params['result_directory'])
+        output_html_files = self.generate_html_report(params['result_directory'], assembly_stats)
 
         report_params = {
               'message': '',
@@ -606,7 +631,9 @@ class CircosUtil:
         sorted_bam = self.generate_alignment_bams(task_params, assembly)
 
         # run circos prep and circos
-        assembly_clean_sorted = self.generate_circos_command(task_params)
+        assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs = self.generate_circos_command(task_params)
+
+        assembly_stats = {'num_contigs' : num_contigs, 'mean_cov' : mean_cov, 'std_cov' : std_cov, 'min_cov' : min_cov, 'max_cov' : max_cov}
 
         # file handling and management
         #os.chdir(cwd)
@@ -618,25 +645,8 @@ class CircosUtil:
         dest = os.path.abspath(self.CIRCOS_RESULT_DIRECTORY)
         #
 
-        #output_report = self.generate_html_report(task_params['output_assembly_name'],task_params['assembly_ref'])
-
-        # load report from scaffolds.fasta
-        # report_name, report_ref = self.load_report(
-        #     output_contigs, params, wsname)
-
-        # make new BinnedContig object and upload to KBase
-        # generate_binned_contig_param = {
-        #     'file_directory': os.path.join(result_directory, self.BINNER_BIN_RESULT_DIR),
-        #     'assembly_ref': task_params['assembly_ref'],
-        #     'binned_contig_name': task_params['binned_contig_name'],
-        #     'workspace_name': task_params['workspace_name']
-        # }
-
-        # binned_contig_obj_ref = \
-        #     self.mgu.file_to_binned_contigs(generate_binned_contig_param).get('binned_contig_obj_ref')
-
         # generate report
-        reportVal = self.generate_report(task_params)
+        reportVal = self.generate_report(task_params, assembly_stats)
         returnVal = {
             'result_directory': result_directory
         }
