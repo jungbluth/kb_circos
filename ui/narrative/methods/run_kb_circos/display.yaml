@@ -59,7 +59,7 @@ description : |
 
     <p><hr></p>
     <p><b>Output:</b></p>
-    <p><b><i>Output Object:</i></b>A KBase reports Object is output.</p>
+    <p><b><i>Output Object:</i></b> A KBase reports Object is output.</p>
     <p><b><i>Downloadable files:</i></b> The relevant output of the Circos run may be downloaded as a zip file. Contents include the clean sequence assembly files and Circos input/output files.</p>
     <p><hr></p>
     <p>Circos diagram description: inner-most black circle represent assembly contigs, mapped read are visualized in the red/grey/green colored outside ring where red is 0x-5x, grey is 5x-10x, and green is 10x-[Max Coverage Detected].</p>
