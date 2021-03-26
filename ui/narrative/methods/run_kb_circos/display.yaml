@@ -30,13 +30,13 @@ suggestions:
 parameters :
     assembly_ref :
         ui-name : Assembly
-        short-hint : Genome assembly object
-        long-hint  : Genome assembly or bin that you want to improve
+        short-hint : Assembly object
+        long-hint  : Assembly object
 
     reads_file :
         ui-name : Reads
-        short-hint : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Jorg will be run
-        long-hint  : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Jorg will be run
+        short-hint : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Circos will be run
+        long-hint  : Reads object (PairedEndLibrary/SingleEndLibrary) upon which Circos will be run
 
     read_mapping_tool :
         ui-name : Read Mapping Tool
@@ -45,12 +45,24 @@ parameters :
 
 description : |
 
-    <p>Circos is a visualization tool with unique applications to displaying and interrogating DNA assemblies.</p>
+    <p>Circos is a visualization tool with unique applications to displaying assembly coverage information.</p>
     <p><hr></p>
     <p><hr></p>
     <p><i>Implemented for KBase by <a href="mailto:sjungbluth@lbl.gov">Sean Jungbluth(sjungbluth@lbl.gov)</a></i></p>
     <p><hr></p>
     <p>This method assumes that you have a method to generate a DNA assembly.</p>
+    <p><hr></p>
+    <p><b>Configuration:</b></p>
+    <p><b><i>Assembly Object:</i></b> The Assembly object is a collection of assembled genome fragments, called "contigs". </p>
+    <p><b><i>Reads Object:</i></b> The raw reads used to produce the original assembly and to be used for assembly improvement. </p>
+    <p><b><i>Read Mapping Tool:</i></b> The read mapping tool used for coverage assessment and generation of the Circos diagram. </p>
+
+    <p><hr></p>
+    <p><b>Output:</b></p>
+    <p><b><i>Output Object:</i></b>A KBase reports Object is output.</p>
+    <p><b><i>Downloadable files:</i></b> The relevant output of the Circos run may be downloaded as a zip file. Contents include the clean sequence reads files and Circos input/output files.</p>
+    <p><hr></p>
+    <p>Circos diagram description: inner-most black circle represent assembly contigs, mapped read are visualize in the red/grey/green colored outside ring where red is 0x-5x, grey is 5x-10x, and green is 10x-[Max Coverage Detected].</p>
     <p><hr></p>
 
 publications:
