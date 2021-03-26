@@ -25,10 +25,6 @@ seed(1)
 from shutil import copyfile
 
 
-# for future expansion
-# from kb_circos.BinningUtilities import BinningUtil as bu
-
-
 def log(message, prefix_newline=False):
     """Logging function, provides a hook to suppress or redirect log messages."""
     print(('\n' if prefix_newline else '') + '{0:.2f}'.format(time.time()) + ': ' + str(message))
@@ -406,19 +402,19 @@ class CircosUtil:
         log('draw_circos_plot: {}'.format(command))
         self._run_command(command)
 
-    def make_circos_plot(self, task_params, reads_file, output_jorg_assembly):
+    def make_circos_plot(self, task_params, reads_file, output_circos_assembly):
         output_fastq = self.uppercase_fastq_file(reads_file)
-        output_jorg_assembly_clean = self.clean_input_fasta(output_jorg_assembly)
-        output_jorg_assembly_clean_sorted = self.sort_fasta_by_length(output_jorg_assembly_clean)
+        output_circos_assembly_clean = self.clean_input_fasta(output_circos_assembly)
+        output_circos_assembly_clean_sorted = self.sort_fasta_by_length(output_circos_assembly_clean)
         sam = os.path.basename(output_fastq).split('.fastq')[0] + ".sam"
-        self.run_read_mapping_interleaved_pairs_mode(task_params, output_jorg_assembly_clean_sorted, output_fastq, sam)
+        self.run_read_mapping_interleaved_pairs_mode(task_params, output_circos_assembly_clean_sorted, output_fastq, sam)
         sorted_bam = self.convert_sam_to_sorted_and_indexed_bam(sam)
         max_cov, min_cov, std_cov, mean_cov = self.extract_mapping_tracks_from_bam(sorted_bam)
-        self.make_circos_karyotype_file(output_jorg_assembly_clean_sorted)
-        num_contigs = self.count_num_contigs(output_jorg_assembly_clean_sorted)
+        self.make_circos_karyotype_file(output_circos_assembly_clean_sorted)
+        num_contigs = self.count_num_contigs(output_circos_assembly_clean_sorted)
         self.prep_circos_axis(max_cov)
         self.draw_circos_plot()
-        return output_jorg_assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs
+        return output_circos_assembly_clean_sorted, max_cov, min_cov, std_cov, mean_cov, num_contigs
 
     def move_circos_output_files_to_output_dir(self):
         dest = os.path.abspath(self.CIRCOS_RESULT_DIRECTORY)
@@ -461,8 +457,8 @@ class CircosUtil:
                              allowZip64=True) as zip_file:
 
             for dirname, subdirs, files in os.walk(result_directory):
-                for file in files:
-                    zip_file.write(os.path.join(dirname, file), file)
+#                for file in files:
+#                    zip_file.write(os.path.join(dirname, file), file)
                 if (dirname.endswith(self.CIRCOS_RESULT_DIRECTORY)):
                     baseDir = os.path.basename(dirname)
                     for file in files:
